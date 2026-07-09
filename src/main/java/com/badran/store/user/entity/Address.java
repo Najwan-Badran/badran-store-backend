@@ -6,6 +6,9 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.OffsetDateTime;
 
+/**
+ * Saved customer delivery address used during checkout fulfillment.
+ */
 @Entity
 @Table(name = "addresses")
 @Getter

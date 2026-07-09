@@ -1,0 +1,13 @@
+erDiagram
+    ROLES ||--o{ USERS : assigns
+    USERS ||--o{ ADDRESSES : owns
+    CATEGORIES ||--o{ CATEGORIES : parent
+    CATEGORIES ||--o{ PRODUCTS : classifies
+    BRANDS ||--o{ PRODUCTS : brands
+    PRODUCTS ||--o{ PRODUCT_IMAGES : has
+    PRODUCTS ||--o{ WISHLIST : saved
+    PRODUCTS ||--o{ REVIEWS : reviewed
+    CART ||--o{ CART_ITEMS : contains
+    COUPONS ||--o{ ORDERS : discounts
+    ORDERS ||--o{ ORDER_ITEMS : contains
+    ORDERS ||--o{ PAYMENTS : paid_by

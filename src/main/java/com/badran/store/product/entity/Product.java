@@ -4,6 +4,7 @@ import com.badran.store.brand.entity.Brand;
 import com.badran.store.category.entity.Category;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -15,6 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Catalog product entity containing localized content, price, stock, JSON specifications, and media.
+ */
 @Entity
 @Table(name = "products")
 @Getter
@@ -94,6 +98,7 @@ public class Product {
     private OffsetDateTime updatedAt;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     @Builder.Default
     private List<ProductImage> images = new ArrayList<>();
 }

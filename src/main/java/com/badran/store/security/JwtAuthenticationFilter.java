@@ -17,6 +17,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Request filter that authenticates bearer JWTs and enforces X-User-Id ownership consistency.
+ */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -56,7 +59,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String role = user.getRole().getRoleName();
         String requestedUserId = request.getHeader(USER_ID_HEADER);
-        if (requestedUserId != null && !requestedUserId.isBlank() && !isAdmin(role)) {
+        if (requestedUserId != null && !requestedUserId.isBlank() && !SecurityContextService.isAdminRole(role)) {
             try {
                 if (!tokenUserId.equals(Long.valueOf(requestedUserId))) {
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
@@ -78,7 +81,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private boolean isAdmin(String role) {
-        return "admin".equalsIgnoreCase(role);
-    }
 }

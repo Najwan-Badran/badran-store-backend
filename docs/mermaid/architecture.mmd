@@ -1,0 +1,8 @@
+flowchart TB
+    Client[Client / Swagger / Postman] --> Security[Spring Security JWT Filter]
+    Security --> Controllers[REST Controllers]
+    Controllers --> Services[Application Services]
+    Services --> Repositories[Spring Data JPA Repositories]
+    Repositories --> PostgreSQL[(PostgreSQL)]
+    Services --> MapStruct[MapStruct Mappers]
+    MapStruct --> DTOs[API DTOs]

@@ -8,6 +8,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
+/**
+ * Discount coupon entity used during checkout to reduce order totals.
+ */
 @Entity
 @Table(name = "coupons")
 @Getter

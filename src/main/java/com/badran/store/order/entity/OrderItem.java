@@ -5,6 +5,9 @@ import lombok.*;
 
 import java.math.BigDecimal;
 
+/**
+ * Immutable-at-checkout product line captured inside an order.
+ */
 @Entity
 @Table(name = "order_items")
 @Getter

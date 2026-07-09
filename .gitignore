@@ -4,3 +4,16 @@ target/
 .DS_Store
 *.log
 .env
+.env.*
+!.env.example
+logs/
+*.pid
+*.hprof
+hs_err_pid*
+replay_pid*
+*.tmp
+*.swp
+*.orig
+dependency-reduced-pom.xml
+coverage/
+/.mvn/wrapper/maven-wrapper.jar

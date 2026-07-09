@@ -1,5 +1,6 @@
 package com.badran.store.product.service;
 
+import com.badran.store.common.DomainConstants;
 import com.badran.store.exception.BadRequestException;
 import com.badran.store.exception.ResourceNotFoundException;
 import com.badran.store.product.dto.ProductDto;
@@ -23,6 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Default product service implementation for catalog lookup, inventory, wishlist, and review workflows.
+ */
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
@@ -35,6 +39,7 @@ public class ProductServiceImpl implements ProductService {
     private final WishlistMapper wishlistMapper;
     private final ReviewMapper reviewMapper;
 
+    /** {@inheritDoc} */
     @Override
     @Transactional(readOnly = true)
     public Page<ProductDto> getProducts(Long categoryId, Long brandId, String query, Pageable pageable) {
@@ -42,6 +47,7 @@ public class ProductServiceImpl implements ProductService {
                 .map(productMapper::toDto);
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional(readOnly = true)
     public ProductDto getProductById(Long productId) {
@@ -50,6 +56,7 @@ public class ProductServiceImpl implements ProductService {
         return productMapper.toDto(product);
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public ProductDto verifyAndDeductStock(Long productId, Integer quantity) {
@@ -70,6 +77,7 @@ public class ProductServiceImpl implements ProductService {
         return productMapper.toDto(savedProduct);
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional(readOnly = true)
     public List<WishlistDto> getWishlist(Long userId) {
@@ -78,6 +86,7 @@ public class ProductServiceImpl implements ProductService {
                 .collect(Collectors.toList());
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public void addToWishlist(Long userId, Long productId) {
@@ -94,6 +103,7 @@ public class ProductServiceImpl implements ProductService {
         wishlistRepository.save(wishlist);
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public void removeFromWishlist(Long userId, Long productId) {
@@ -103,14 +113,16 @@ public class ProductServiceImpl implements ProductService {
         wishlistRepository.deleteByUserIdAndProductProductId(userId, productId);
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional(readOnly = true)
     public List<ReviewDto> getProductReviews(Long productId) {
-        return reviewRepository.findByProductProductIdAndStatus(productId, "published").stream()
+        return reviewRepository.findByProductProductIdAndStatus(productId, DomainConstants.ReviewStatus.PUBLISHED).stream()
                 .map(reviewMapper::toDto)
                 .collect(Collectors.toList());
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public ReviewDto addReview(Long userId, Long productId, Long orderId, Integer rating, String comment) {
@@ -127,7 +139,7 @@ public class ProductServiceImpl implements ProductService {
                 .orderId(orderId)
                 .rating(rating.shortValue())
                 .comment(comment)
-                .status("published") // Auto-publish for university project simplicity
+                .status(DomainConstants.ReviewStatus.PUBLISHED) // Auto-publish for university project simplicity
                 .build();
 
         Review savedReview = reviewRepository.save(review);

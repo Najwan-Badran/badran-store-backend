@@ -7,6 +7,9 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.OffsetDateTime;
 
+/**
+ * Wishlist entity that stores a product saved by a user for later purchase.
+ */
 @Entity
 @Table(name = "wishlist")
 @Getter

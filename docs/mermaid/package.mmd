@@ -1,0 +1,25 @@
+flowchart LR
+    Root[com.badran.store]
+    Root --> auth
+    Root --> security
+    Root --> user
+    Root --> product
+    Root --> cart
+    Root --> order
+    Root --> wishlist
+    Root --> review
+    Root --> brand
+    Root --> category
+    Root --> coupon
+    Root --> common
+    Root --> exception
+    Root --> config
+    auth --> user
+    auth --> security
+    order --> cart
+    order --> product
+    order --> coupon
+    product --> brand
+    product --> category
+    product --> wishlist
+    product --> review

@@ -1,0 +1,17 @@
+sequenceDiagram
+    participant Client
+    participant Filter as JWT Filter
+    participant Controller
+    participant Service
+    participant Repository
+    participant DB as PostgreSQL
+    Client->>Filter: HTTP request
+    Filter->>Filter: Validate bearer JWT
+    Filter->>Controller: Authenticated request
+    Controller->>Service: Invoke business use case
+    Service->>Repository: Load or persist entities
+    Repository->>DB: SQL through Hibernate
+    DB-->>Repository: Query result
+    Repository-->>Service: Entity result
+    Service-->>Controller: DTO result
+    Controller-->>Client: ApiResponse JSON

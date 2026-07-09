@@ -7,6 +7,7 @@ import com.badran.store.cart.entity.CartItem;
 import com.badran.store.cart.mapper.CartMapper;
 import com.badran.store.cart.repository.CartItemRepository;
 import com.badran.store.cart.repository.CartRepository;
+import com.badran.store.common.DomainConstants;
 import com.badran.store.coupon.entity.Coupon;
 import com.badran.store.coupon.repository.CouponRepository;
 import com.badran.store.exception.BadRequestException;
@@ -24,10 +25,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Default order service implementation for carts, checkout, order lookup, and payment completion.
+ */
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
@@ -45,6 +52,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderMapper orderMapper;
     private final PaymentMapper paymentMapper;
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public CartDto getCart(Long userId, String sessionId) {
@@ -64,6 +72,7 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public CartDto addItemToCart(Long userId, String sessionId, AddToCartRequest request) {
@@ -84,6 +93,7 @@ public class OrderServiceImpl implements OrderService {
         return cartMapper.toDto(getOrCreateCart(userId, sessionId));
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public CartDto removeItemFromCart(Long userId, String sessionId, Long productId) {
@@ -91,12 +101,13 @@ public class OrderServiceImpl implements OrderService {
         CartItem item = cartItemRepository.findByCartCartIdAndProductId(cart.getCartId(), productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found in cart"));
 
-        cart.getItems().removeIf(cartItem -> cartItem.getCartItemId().equals(item.getCartItemId()));
+        cart.getItems().removeIf(cartItem -> Objects.equals(cartItem.getCartItemId(), item.getCartItemId()));
         cartItemRepository.delete(item);
         cartItemRepository.flush();
         return cartMapper.toDto(getOrCreateCart(userId, sessionId));
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public void clearCart(Long userId, String sessionId) {
@@ -105,6 +116,7 @@ public class OrderServiceImpl implements OrderService {
         cartRepository.save(cart);
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public OrderDto createOrder(Long userId, String sessionId, CreateOrderRequest request) {
@@ -115,17 +127,8 @@ public class OrderServiceImpl implements OrderService {
             throw new BadRequestException("Cannot checkout an empty cart");
         }
 
-        BigDecimal subtotal = BigDecimal.ZERO;
-        
-        // 1. Fetch prices, validate stock, and calculate subtotal
-        for (CartItem item : cart.getItems()) {
-            ProductDto product = productService.getProductById(item.getProductId());
-            if (product.getStockQuantity() < item.getQuantity()) {
-                throw new BadRequestException("Product " + product.getNameEn() + " has insufficient stock");
-            }
-            BigDecimal lineTotal = product.getBasePrice().multiply(BigDecimal.valueOf(item.getQuantity()));
-            subtotal = subtotal.add(lineTotal);
-        }
+        CartPricing cartPricing = priceAndValidateCart(cart);
+        BigDecimal subtotal = cartPricing.subtotal();
 
         // 2. Validate and apply coupon if provided
         BigDecimal discountAmount = BigDecimal.ZERO;
@@ -153,7 +156,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 3. Delivery fee
         BigDecimal deliveryFee = BigDecimal.ZERO;
-        if ("home_delivery".equalsIgnoreCase(fulfillmentMethod)) {
+        if (DomainConstants.FulfillmentMethod.HOME_DELIVERY.equalsIgnoreCase(fulfillmentMethod)) {
             deliveryFee = BigDecimal.valueOf(10.0); // Flat fee
         }
 
@@ -176,7 +179,7 @@ public class OrderServiceImpl implements OrderService {
                 .deliveryZone(request.getDeliveryZone())
                 .deliveryAddressLine(request.getDeliveryAddressLine())
                 .deliveryFee(deliveryFee)
-                .status("pending")
+                .status(DomainConstants.OrderStatus.PENDING)
                 .subtotal(subtotal)
                 .coupon(coupon)
                 .discountAmount(discountAmount)
@@ -187,7 +190,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 5. Create Order Items & Deduct Stock
         for (CartItem item : cart.getItems()) {
-            ProductDto product = productService.getProductById(item.getProductId());
+            ProductDto product = cartPricing.productsById().get(item.getProductId());
             
             productService.verifyAndDeductStock(item.getProductId(), item.getQuantity());
 
@@ -206,7 +209,7 @@ public class OrderServiceImpl implements OrderService {
         Payment payment = Payment.builder()
                 .order(savedOrder)
                 .method(paymentMethod)
-                .status("unpaid")
+                .status(DomainConstants.PaymentStatus.UNPAID)
                 .build();
         paymentRepository.save(payment);
 
@@ -218,6 +221,7 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.toDto(savedOrder);
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional(readOnly = true)
     public OrderDto getOrderById(Long orderId) {
@@ -226,6 +230,7 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.toDto(order);
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional(readOnly = true)
     public List<OrderDto> getOrdersByUser(Long userId) {
@@ -234,6 +239,7 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public PaymentDto payForOrder(Long orderId, String paymentMethod) {
@@ -243,17 +249,18 @@ public class OrderServiceImpl implements OrderService {
 
         List<Payment> payments = paymentRepository.findByOrderOrderId(orderId);
         Payment payment = payments.stream()
-                .filter(p -> "unpaid".equalsIgnoreCase(p.getStatus()) || "pending_verification".equalsIgnoreCase(p.getStatus()))
+                .filter(p -> DomainConstants.PaymentStatus.UNPAID.equalsIgnoreCase(p.getStatus())
+                        || DomainConstants.PaymentStatus.PENDING_VERIFICATION.equalsIgnoreCase(p.getStatus()))
                 .findFirst()
                 .orElseThrow(() -> new BadRequestException("No pending payment found for this order"));
 
         payment.setMethod(normalizedPaymentMethod);
-        payment.setStatus("paid");
+        payment.setStatus(DomainConstants.PaymentStatus.PAID);
         payment.setTransactionRef("TXN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         payment.setVerifiedAt(OffsetDateTime.now());
         paymentRepository.save(payment);
 
-        order.setStatus("processing");
+        order.setStatus(DomainConstants.OrderStatus.PROCESSING);
         orderRepository.save(order);
 
         return paymentMapper.toDto(payment);
@@ -264,11 +271,12 @@ public class OrderServiceImpl implements OrderService {
             throw new BadRequestException("Fulfillment method is required");
         }
         String normalized = fulfillmentMethod.trim().toLowerCase();
-        if ("delivery".equals(normalized) || "home_delivery".equals(normalized)) {
-            return "home_delivery";
+        if (DomainConstants.FulfillmentMethod.DELIVERY_ALIAS.equals(normalized)
+                || DomainConstants.FulfillmentMethod.HOME_DELIVERY.equals(normalized)) {
+            return DomainConstants.FulfillmentMethod.HOME_DELIVERY;
         }
-        if ("pickup".equals(normalized)) {
-            return "pickup";
+        if (DomainConstants.FulfillmentMethod.PICKUP.equals(normalized)) {
+            return DomainConstants.FulfillmentMethod.PICKUP;
         }
         throw new BadRequestException("Invalid fulfillment method. Allowed values: home_delivery, pickup");
     }
@@ -278,12 +286,33 @@ public class OrderServiceImpl implements OrderService {
             throw new BadRequestException("Payment method is required");
         }
         String normalized = paymentMethod.trim().toLowerCase();
-        if ("cash".equals(normalized) || "cod".equals(normalized)) {
-            return "cod";
+        if (DomainConstants.PaymentMethod.CASH_ALIAS.equals(normalized)
+                || DomainConstants.PaymentMethod.COD.equals(normalized)) {
+            return DomainConstants.PaymentMethod.COD;
         }
-        if ("card".equals(normalized) || "bank_transfer".equals(normalized)) {
+        if (DomainConstants.PaymentMethod.CARD.equals(normalized)
+                || DomainConstants.PaymentMethod.BANK_TRANSFER.equals(normalized)) {
             return normalized;
         }
         throw new BadRequestException("Invalid payment method. Allowed values: cod, card, bank_transfer");
+    }
+
+    private CartPricing priceAndValidateCart(Cart cart) {
+        BigDecimal subtotal = BigDecimal.ZERO;
+        Map<Long, ProductDto> productsById = new HashMap<>();
+
+        for (CartItem item : cart.getItems()) {
+            ProductDto product = productService.getProductById(item.getProductId());
+            if (product.getStockQuantity() < item.getQuantity()) {
+                throw new BadRequestException("Product " + product.getNameEn() + " has insufficient stock");
+            }
+            productsById.put(item.getProductId(), product);
+            subtotal = subtotal.add(product.getBasePrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+        }
+
+        return new CartPricing(subtotal, productsById);
+    }
+
+    private record CartPricing(BigDecimal subtotal, Map<Long, ProductDto> productsById) {
     }
 }

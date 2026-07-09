@@ -3,6 +3,7 @@ package com.badran.store.order.entity;
 import com.badran.store.coupon.entity.Coupon;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -12,6 +13,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Customer order aggregate containing fulfillment, totals, coupon, and purchased item lines.
+ */
 @Entity
 @Table(name = "orders")
 @Getter
@@ -89,6 +93,7 @@ public class Order {
     private OffsetDateTime updatedAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
 }

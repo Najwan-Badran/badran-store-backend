@@ -6,7 +6,13 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * Repository for product category hierarchy records.
+ */
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
+    /**
+     * Finds top-level catalog categories.
+     */
     List<Category> findByParentCategoryIsNull();
 }

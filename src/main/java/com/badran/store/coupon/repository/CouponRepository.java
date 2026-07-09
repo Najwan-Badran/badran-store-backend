@@ -10,10 +10,15 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+/**
+ * Repository for checkout coupon lookup and locking.
+ */
 @Repository
 public interface CouponRepository extends JpaRepository<Coupon, Long> {
-    Optional<Coupon> findByCodeIgnoreCase(String code);
 
+    /**
+     * Finds a coupon by code using a pessimistic write lock while checkout validates usage.
+     */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT c FROM Coupon c WHERE LOWER(c.code) = LOWER(:code)")
     Optional<Coupon> findByCodeIgnoreCaseForUpdate(@Param("code") String code);

@@ -7,6 +7,9 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.OffsetDateTime;
 
+/**
+ * Customer product review entity linked to a product, user, and order.
+ */
 @Entity
 @Table(name = "reviews")
 @Getter

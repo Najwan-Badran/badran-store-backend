@@ -8,6 +8,9 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Catalog category entity used to organize products into localized category hierarchies.
+ */
 @Entity
 @Table(name = "categories")
 @Getter

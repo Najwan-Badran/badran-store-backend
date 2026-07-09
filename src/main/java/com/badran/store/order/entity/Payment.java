@@ -6,6 +6,9 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.OffsetDateTime;
 
+/**
+ * Payment record associated with an order and used to track payment status and verification.
+ */
 @Entity
 @Table(name = "payments")
 @Getter

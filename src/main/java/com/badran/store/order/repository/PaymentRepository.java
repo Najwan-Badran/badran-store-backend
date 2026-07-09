@@ -6,7 +6,13 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * Repository for payment records associated with orders.
+ */
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
+    /**
+     * Finds all payment records for an order.
+     */
     List<Payment> findByOrderOrderId(Long orderId);
 }

@@ -6,6 +6,9 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.OffsetDateTime;
 
+/**
+ * Product brand entity used to identify manufacturers or suppliers in the catalog.
+ */
 @Entity
 @Table(name = "brands")
 @Getter

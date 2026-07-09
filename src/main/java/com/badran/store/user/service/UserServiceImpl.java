@@ -1,6 +1,7 @@
 package com.badran.store.user.service;
 
 import com.badran.store.auth.dto.*;
+import com.badran.store.common.DomainConstants;
 import com.badran.store.user.entity.Role;
 import com.badran.store.user.entity.User;
 import com.badran.store.user.dto.UserDto;
@@ -18,6 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+/**
+ * Default user service implementation for registration, authentication, profile lookup, and password reset workflows.
+ */
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -28,6 +32,7 @@ public class UserServiceImpl implements UserService {
     private final JwtUtils jwtUtils;
     private final UserMapper userMapper;
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public UserDto register(RegisterRequest request) {
@@ -36,7 +41,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // Fetch customer role (ID = 1)
-        Role customerRole = roleRepository.findByRoleName("customer")
+        Role customerRole = roleRepository.findByRoleName(DomainConstants.Roles.CUSTOMER)
                 .orElseThrow(() -> new ResourceNotFoundException("Default role 'customer' not found in database"));
 
         User user = User.builder()
@@ -53,6 +58,7 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDto(savedUser);
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional(readOnly = true)
     public LoginResponse login(LoginRequest request) {
@@ -77,6 +83,7 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional(readOnly = true)
     public UserDto getUserById(Long userId) {
@@ -85,6 +92,7 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDto(user);
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public String initiatePasswordReset(String email) {
@@ -102,6 +110,7 @@ public class UserServiceImpl implements UserService {
         return resetToken.toString();
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {

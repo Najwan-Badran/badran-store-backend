@@ -2,12 +2,16 @@ package com.badran.store.cart.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Shopping cart aggregate for an authenticated user or anonymous session before checkout.
+ */
 @Entity
 @Table(name = "cart")
 @Getter
@@ -33,6 +37,7 @@ public class Cart {
     private OffsetDateTime updatedAt;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     @Builder.Default
     private List<CartItem> items = new ArrayList<>();
 }

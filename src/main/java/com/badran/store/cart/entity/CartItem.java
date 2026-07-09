@@ -3,6 +3,9 @@ package com.badran.store.cart.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Product line item stored inside a shopping cart.
+ */
 @Entity
 @Table(name = "cart_items")
 @Getter

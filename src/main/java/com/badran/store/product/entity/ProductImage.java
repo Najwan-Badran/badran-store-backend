@@ -3,6 +3,9 @@ package com.badran.store.product.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Product media entity used to order and expose catalog image URLs.
+ */
 @Entity
 @Table(name = "product_images")
 @Getter

@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: badran-store-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-badran_store}
+      POSTGRES_USER: ${POSTGRES_USER:-badran}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-badran_password}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - badran-postgres-data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-badran} -d ${POSTGRES_DB:-badran_store}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: badran-store-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8080
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-badran_store}
+      DB_USERNAME: ${POSTGRES_USER:-badran}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-badran_password}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set and at least 32 bytes long}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+
+volumes:
+  badran-postgres-data:

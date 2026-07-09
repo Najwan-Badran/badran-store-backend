@@ -2,6 +2,7 @@ package com.badran.store.user.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -10,6 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Application user entity for customers and administrators authenticated through JWT.
+ */
 @Entity
 @Table(name = "users")
 @Getter
@@ -62,6 +66,7 @@ public class User {
     private OffsetDateTime updatedAt;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     @Builder.Default
     private List<Address> addresses = new ArrayList<>();
 }

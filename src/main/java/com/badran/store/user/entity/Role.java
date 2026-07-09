@@ -9,6 +9,9 @@ import org.hibernate.type.SqlTypes;
 import java.time.OffsetDateTime;
 import java.util.Map;
 
+/**
+ * Security role entity that defines user role names and optional JSON permission metadata.
+ */
 @Entity
 @Table(name = "roles")
 @Getter
