@@ -1,12 +1,13 @@
 package com.badran.store.security;
 
-import com.badran.store.user.entity.User;
-import com.badran.store.user.repository.UserRepository;
+import com.badran.store.entity.User;
+import com.badran.store.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,6 +23,7 @@ import java.util.List;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String BEARER_PREFIX = "Bearer ";
@@ -44,6 +46,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authorizationHeader.substring(BEARER_PREFIX.length());
         if (!jwtUtils.validateToken(token)) {
+            log.warn("Rejected request with invalid JWT: {}", request.getRequestURI());
+            SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
@@ -53,6 +57,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 .filter(User::getIsActive)
                 .orElse(null);
         if (user == null) {
+            log.warn("Rejected JWT for missing or inactive user id={} path={}", tokenUserId, request.getRequestURI());
+            SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
@@ -62,10 +68,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (requestedUserId != null && !requestedUserId.isBlank() && !SecurityContextService.isAdminRole(role)) {
             try {
                 if (!tokenUserId.equals(Long.valueOf(requestedUserId))) {
+                    log.warn("Rejected user header mismatch tokenUserId={} requestedUserId={} path={}",
+                            tokenUserId, requestedUserId, request.getRequestURI());
+                    SecurityContextHolder.clearContext();
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     return;
                 }
             } catch (NumberFormatException ex) {
+                log.warn("Rejected invalid X-User-Id header value={} path={}", requestedUserId, request.getRequestURI());
+                SecurityContextHolder.clearContext();
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 return;
             }

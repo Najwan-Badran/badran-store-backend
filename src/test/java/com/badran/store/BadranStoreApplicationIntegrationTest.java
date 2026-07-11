@@ -1,7 +1,7 @@
 package com.badran.store;
 
-import com.badran.store.coupon.repository.CouponRepository;
-import com.badran.store.product.repository.ProductRepository;
+import com.badran.store.repository.CouponRepository;
+import com.badran.store.repository.ProductRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

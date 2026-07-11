@@ -58,12 +58,8 @@ public class JwtUtils {
                 .subject(subject)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                .signWith(getSignKey())
+                .signWith(getSigningKey())
                 .compact();
-    }
-
-    private SecretKey getSignKey() {
-        return getSigningKey();
     }
 
     /**
@@ -72,7 +68,7 @@ public class JwtUtils {
     public boolean validateToken(String token) {
         try {
             Jwts.parser()
-                    .verifyWith(getSignKey())
+                    .verifyWith(getSigningKey())
                     .build()
                     .parseSignedClaims(token);
             return true;
@@ -112,7 +108,7 @@ public class JwtUtils {
 
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .verifyWith(getSignKey())
+                .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();

@@ -1,6 +1,6 @@
 package com.badran.store.security;
 
-import com.badran.store.common.DomainConstants;
+import com.badran.store.enums.UserRole;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -40,7 +40,7 @@ public class SecurityContextService {
      * Returns true when a role name represents an administrator.
      */
     public static boolean isAdminRole(String role) {
-        return DomainConstants.Roles.ADMIN.equalsIgnoreCase(role);
+        return UserRole.ADMIN.value().equalsIgnoreCase(role);
     }
 
     /**
